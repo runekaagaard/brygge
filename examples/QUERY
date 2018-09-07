@@ -1,0 +1,5 @@
+[:find ?title ?year ?genre 
+ :where [?e :movie/title ?title] 
+        [?e :movie/release-year ?year] 
+        [?e :movie/genre ?genre]]
+
