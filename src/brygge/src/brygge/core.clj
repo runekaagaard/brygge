@@ -15,13 +15,17 @@
 
 
 (require '[aleph.http :as http])
-(def  uri "datomic:free://localhost:4334/t1")
 (require '[datomic.api :as d])
+(require '[cognitect.transit :as transit])
+(import [java.io ByteArrayInputStream ByteArrayOutputStream])
+
+(def  uri "datomic:free://localhost:4334/t1")
 (d/create-database uri)
 (def conn (d/connect uri))
 
 (defn parse-req [req]
-  (read-string (bs/convert (:body req) String)))
+  (let [reader (transit/reader (:body req) :json)]
+    (println (transit/read reader))))
 
 (defn transact-handler [req]
   {:status 200
