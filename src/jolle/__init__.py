@@ -5,42 +5,71 @@ from StringIO import StringIO
 from transit.transit_types import Keyword as K, Symbol as S
 
 
-def transact(datoms):
+def _request(action, datoms):
     io = StringIO()
     writer = Writer(io)
     writer.write(datoms)
-    r = post(
-        "http://127.0.0.1:8080/transact",
-        data=io.getvalue(),
-        headers={'Content-Type': "application/transit+json"})
-    reader = Reader()
-    return reader.read(StringIO(r.text))
+    try:
+        r = post(
+            "http://127.0.0.1:8080/" + action,
+            data=io.getvalue(),
+            headers={'Content-Type': "application/transit+json"})
+        reader = Reader()
+        data = reader.read(StringIO(r.text))
+        print type(data)
+        return data
+    except:
+        print r.text
+        raise
+
+
+def transact(datoms):
+    return _request("transact", datoms)
 
 
 def query(datoms):
-    io = StringIO()
-    writer = Writer(io)
-    writer.write(datoms)
-    r = post("http://127.0.0.1:8080/query", data=io.getvalue())
-    reader = Reader()
-    return reader.read(StringIO(r.text))
+    return _request("query", datoms)
 
 
-print transact([{K("movie/title"): "bars1@foo.com"}])
-print query([
-    K("find"),
-    S("?email"),
-    K("where"), [S("?e"), K("person/email"),
-                 S("?email")]
+def field(ident, db_type, doc, cardinality="one"):
+    return {
+        K("db/ident"): K(ident),
+        K("db/valueType"): K("db.type/" + db_type),
+        K("db/cardinality"): K("db.cardinality/" + cardinality),
+        K("db/doc"): doc,
+    }
+
+
+# yapf: disable
+MOVIE_SCHEMA = [
+    field("movie/title", "string", "The title of the movie"),
+    field("movie/genre", "string", "The genre of the movie"),
+    field("movie/release_year", "long",
+          "The year the movie was released in theaters")]
+print transact(MOVIE_SCHEMA)
+
+print transact([{
+        K("movie/title"): "The Goonies",
+        K("movie/genre"): "action/adventure",
+        K("movie/release_year"): 1985
+    }, {
+        K("movie/title"): "Commando",
+        K("movie/genre"): "action/adventure",
+        K("movie/release_year"): 1985
+    }, {
+        K("movie/title"): "Optur",
+        K("movie/genre"): "punk dystopia",
+        K("movie/release_year"): 1984
+    }
 ])
-print query([
-    K("find"),
-    S("?title"),
-    S("?year"),
-    S("?genre"),
-    K("where"), [S("?e"), K("movie/title"),
-                 S("?title")], [S("?e"),
-                                K("movie/release-year"),
-                                S("?year")],
-    [S("?e"), K("movie/genre"), S("?genre")]
+
+movies = query([
+    K("find"), S("?title"), S("?year"), S("?genre"),
+    K("where"),
+        [S("?e"), K("movie/title"), S("?title")],
+        [S("?e"), K("movie/release_year"), S("?year")],
+        [S("?e"), K("movie/genre"), S("?genre")],
 ])
+for movie in movies:
+    print u", ".join(unicode(x) for x in movie)
+# yapf: enable

@@ -1,6 +1,7 @@
 (ns brygge.core
   (:import
-    [io.netty.handler.ssl SslContextBuilder])
+    [io.netty.handler.ssl SslContextBuilder]
+    [java.io ByteArrayInputStream ByteArrayOutputStream])
   (:require
     [compojure.core :as compojure :refer [GET POST]]
     [ring.middleware.params :as params]
@@ -11,22 +12,19 @@
     [manifold.stream :as s]
     [manifold.deferred :as deferred]
     [clojure.core.async :as a]
-    [clojure.java.io :refer [file]]))
+    [clojure.java.io :refer [file]]
+    [aleph.http :as http]
+    [datomic.api :as d]
+    [cognitect.transit :as transit]))
 
-
-(require '[aleph.http :as http])
-(require '[datomic.api :as d])
-(require '[cognitect.transit :as transit])
-(import [java.io ByteArrayInputStream ByteArrayOutputStream])
-
-(def  uri "datomic:free://localhost:4334/t1")
-(d/create-database uri)
-(def conn (d/connect uri))
+(def db-uri "datomic:mem://t1")
+(d/create-database db-uri)
+(def conn (d/connect db-uri))
 
 (defn result [data]
   (let [out (ByteArrayOutputStream. 4096)
         writer (transit/writer out :json)]
-    (println (pr-str) data)
+    (prn data)
     (transit/write writer data)
     {:status 200
      :headers {"content-type" "text/plain"}
@@ -35,7 +33,7 @@
 (defn parse-req [req]
   (let [reader (transit/reader (:body req) :json)
         data (transit/read reader)]
-    (println (pr-str data))
+    (prn data)
     data))
 
 (defn transact-handler [req]

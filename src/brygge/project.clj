@@ -9,6 +9,7 @@
                  [org.clojure/clojure "1.9.0"]
                  [org.clojure/core.async "0.4.474"]
                  [com.datomic/datomic-free "0.9.5697"]
+                 [com.datomic/client-pro "0.8.20"]
                  [com.cognitect/transit-clj "0.8.313"]]
   :main ^:skip-aot brygge.core
   :target-path "target/%s"
