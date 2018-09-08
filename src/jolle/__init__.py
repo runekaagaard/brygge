@@ -1,4 +1,5 @@
 from transit.writer import Writer
+from transit.reader import Reader
 from requests import post
 from StringIO import StringIO
 from transit.transit_types import Keyword as K, Symbol as S
@@ -8,8 +9,12 @@ def transact(datoms):
     io = StringIO()
     writer = Writer(io)
     writer.write(datoms)
-    r = post("http://127.0.0.1:8080/transact", data=io.getvalue())
-    print r.text
+    r = post(
+        "http://127.0.0.1:8080/transact",
+        data=io.getvalue(),
+        headers={'Content-Type': "application/transit+json"})
+    reader = Reader()
+    return reader.read(StringIO(r.text))
 
 
 def query(datoms):
@@ -17,11 +22,18 @@ def query(datoms):
     writer = Writer(io)
     writer.write(datoms)
     r = post("http://127.0.0.1:8080/query", data=io.getvalue())
-    print r.text
+    reader = Reader()
+    return reader.read(StringIO(r.text))
 
 
-transact([{K("foo"): "bar"}])
-query([
+print transact([{K("movie/title"): "bars1@foo.com"}])
+print query([
+    K("find"),
+    S("?email"),
+    K("where"), [S("?e"), K("person/email"),
+                 S("?email")]
+])
+print query([
     K("find"),
     S("?title"),
     S("?year"),
@@ -32,9 +44,3 @@ query([
                                 S("?year")],
     [S("?e"), K("movie/genre"), S("?genre")]
 ])
-"""
-[:find ?title ?year ?genre 
- :where [?e :movie/title ?title] 
-        [?e :movie/release-year ?year] 
-        [?e :movie/genre ?genre]]
-"""

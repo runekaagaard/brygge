@@ -23,20 +23,28 @@
 (d/create-database uri)
 (def conn (d/connect uri))
 
+(defn result [data]
+  (let [out (ByteArrayOutputStream. 4096)
+        writer (transit/writer out :json)]
+    (println (pr-str) data)
+    (transit/write writer data)
+    {:status 200
+     :headers {"content-type" "text/plain"}
+     :body (.toString out)}))
+
 (defn parse-req [req]
-  (let [reader (transit/reader (:body req) :json)]
-    (println (transit/read reader))))
+  (let [reader (transit/reader (:body req) :json)
+        data (transit/read reader)]
+    (println (pr-str data))
+    data))
 
 (defn transact-handler [req]
-  {:status 200
-   :headers {"content-type" "text/plain"}
-   :body (str (d/transact conn (parse-req req)))})
+   (result (pr-str @(d/transact conn (parse-req req)))))
 
 (defn query-handler [req]
   (let [db (d/db conn)]
-  {:status 200
-   :headers {"content-type" "text/plain"}
-   :body (str (d/q (parse-req req) db))}))
+    (result (d/q (parse-req req) db))
+  ))
 
 (def handler
   (params/wrap-params
