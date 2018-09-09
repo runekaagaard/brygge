@@ -25,7 +25,7 @@
   (let [out (ByteArrayOutputStream. 4096)
         writer (transit/writer out :json)]
     (prn data)
-    (transit/write writer data)
+    (transit/write writer {:content data})
     {:status 200
      :headers {"content-type" "text/plain"}
      :body (.toString out)}))
@@ -34,7 +34,7 @@
   (let [reader (transit/reader (:body req) :json)
         data (transit/read reader)]
     (prn data)
-    data))
+    (:content data)))
 
 (defn transact-handler [req]
    (result (pr-str @(d/transact conn (parse-req req)))))
@@ -50,6 +50,19 @@
       (POST "/transact"         [] transact-handler)
       (POST "/query"         [] query-handler)
       (route/not-found "No such page."))))
+
+;(require '[compojure.api.exception :as ex])
+;(require '[ring.util.http-response :as response])
+
+;; (defn custom-handler [f type]
+;;   (fn [^Exception e data request]
+;;     (f {:message (.getMessage e), :type type})))
+
+;; (api
+;;  {:exceptions
+;;   {:handlers
+;;    {
+;;     ::ex/default (custom-handler response/internal-server-error :unknown)}}})
 
 (defn -main
   "I don't do a whole lot ... yet."

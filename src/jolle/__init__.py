@@ -8,7 +8,7 @@ from transit.transit_types import Keyword as K, Symbol as S
 def _request(action, datoms):
     io = StringIO()
     writer = Writer(io)
-    writer.write(datoms)
+    writer.write({K("content"): datoms})
     try:
         r = post(
             "http://127.0.0.1:8080/" + action,
@@ -16,11 +16,13 @@ def _request(action, datoms):
             headers={'Content-Type': "application/transit+json"})
         reader = Reader()
         data = reader.read(StringIO(r.text))
-        print type(data)
-        return data
-    except:
-        print r.text
-        raise
+        return data[K("content")]
+    except Exception as e:
+        try:
+            print r.text
+        except UnboundLocalError:
+            pass
+        raise e
 
 
 def transact(datoms):
@@ -64,7 +66,7 @@ print transact([{
 ])
 
 movies = query([
-    K("find"), S("?title"), S("?year"), S("?genre"),
+    K("find"), S("?title"), S("?genre"), S("?year"),
     K("where"),
         [S("?e"), K("movie/title"), S("?title")],
         [S("?e"), K("movie/release_year"), S("?year")],
