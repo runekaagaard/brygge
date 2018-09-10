@@ -15,57 +15,66 @@
     [clojure.java.io :refer [file]]
     [aleph.http :as http]
     [datomic.api :as d]
-    [cognitect.transit :as transit]))
+    [cognitect.transit :as transit]
+    [clojure.string :as str]))
 
-(def db-uri "datomic:mem://t1")
-(d/create-database db-uri)
-(def conn (d/connect db-uri))
-
-(defn result [data]
+(defn result [data & [status]]
   (let [out (ByteArrayOutputStream. 4096)
         writer (transit/writer out :json)]
-    (prn data)
     (transit/write writer {:content data})
-    {:status 200
+    {:status (or status 200)
      :headers {"content-type" "text/plain"}
      :body (.toString out)}))
+
+(defn wrap-exception [handler]
+  (fn [request]
+    (try (handler request)
+      (catch Exception e
+        (result (with-out-str (clojure.stacktrace/print-stack-trace e 100)) 500)))))
+
+(def conn
+  (memoize
+   (fn [db-uri]
+    (d/connect db-uri))))
+
 
 (defn parse-req [req]
   (let [reader (transit/reader (:body req) :json)
         data (transit/read reader)]
-    (prn data)
     (:content data)))
 
+(defn insert-db [x]
+  (if (and (string? x ) (str/starts-with? x "datomic:"))
+    (d/db (conn x))
+    x))
+
+(defn insert-connection [x]
+  (if (and (string? x ) (str/starts-with? x "datomic:"))
+    (conn x)
+    x))
+
+(defn create-database-handler [req]
+  (result (d/create-database (parse-req req))))
+
 (defn transact-handler [req]
-   (result (pr-str @(d/transact conn (parse-req req)))))
+  (let [args (map insert-connection (parse-req req))]
+    (result (pr-str @(apply d/transact args)))))
 
 (defn query-handler [req]
-  (let [db (d/db conn)]
-    (result (d/q (parse-req req) db))
-  ))
+  (let [args (map insert-db (parse-req req))]
+    (result (apply d/q args))))
 
 (def handler
   (params/wrap-params
+   (wrap-exception
     (compojure/routes
       (POST "/transact"         [] transact-handler)
       (POST "/query"         [] query-handler)
-      (route/not-found "No such page."))))
-
-;(require '[compojure.api.exception :as ex])
-;(require '[ring.util.http-response :as response])
-
-;; (defn custom-handler [f type]
-;;   (fn [^Exception e data request]
-;;     (f {:message (.getMessage e), :type type})))
-
-;; (api
-;;  {:exceptions
-;;   {:handlers
-;;    {
-;;     ::ex/default (custom-handler response/internal-server-error :unknown)}}})
+      (POST "/create-database"         [] create-database-handler)
+      (route/not-found "No such page.")))))
 
 (defn -main
-  "I don't do a whole lot ... yet."
+  "Starts the server."
   [& args]
     (println "brygge started...")
     (http/start-server handler {:port 8080}))

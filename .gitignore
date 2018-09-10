@@ -57,3 +57,5 @@ flycheck_*.el
 # directory configuration
 .dir-locals.el
 *.pyc
+src/brygge/target/
+src/jolle/venv/
