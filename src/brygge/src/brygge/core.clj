@@ -19,7 +19,6 @@
     [clojure.string :as str]))
 
 (defn result [data & [status]]
-    (prn data)
   (let [out (ByteArrayOutputStream. 4096)
         writer (transit/writer out :json)]
     (transit/write writer {:content data})
@@ -82,6 +81,6 @@
 
 (defn -main
   "Starts the server."
-  [& args]
-    (println "brygge started...")
-    (http/start-server handler {:port 8080}))
+  [port]
+    (http/start-server handler {:port (Integer. port)})
+    (println "brygge started on port" port))
