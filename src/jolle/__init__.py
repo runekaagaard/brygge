@@ -5,6 +5,7 @@ from transit.reader import Reader
 from requests import post
 from StringIO import StringIO
 from transit.transit_types import Keyword as K, Symbol as S
+from transit.pyversion import string_types
 
 
 class DatomicError(Exception):
@@ -50,14 +51,59 @@ def create_database(db):
     return _request("create-database", db)
 
 
+"""TESTING"""
+
+# Different kind of magic.
+###
+
+
 def field(ident, db_type, doc, cardinality="one"):
     return {
-        K("db/ident"): K(ident),
+        k.db.ident: K(ident),
         K("db/valueType"): K("db.type/" + db_type),
         K("db/cardinality"): K("db.cardinality/" + cardinality),
         K("db/doc"): doc,
     }
 
+
+class KeywordUnicorn(K):
+    def __init__(self):
+        self.parent = None
+
+    def __getattr__(self, value):
+        assert isinstance(value, string_types)
+        if self.__dict__["parent"] is None:
+            instance = KeywordUnicorn()
+            instance.parent = instance
+            instance.str = value
+            instance.hv = value.__hash__()
+            return instance
+        else:
+            self.str += u"/" + value
+            self.hv = self.str.__hash__()
+            return self
+
+
+class SymbolUnicorn(object):
+    def __getattr__(self, value):
+        return S("?" + value)
+
+
+def cmap(**kwargs):
+    prefix = kwargs.pop("prefix", None)
+    maybe_prefix = (lambda x: x) if prefix is None else (
+        lambda x: prefix + "/" + x)
+
+    return {K(maybe_prefix(k)): v for k, v in kwargs.iteritems()}
+
+
+k = KeywordUnicorn()
+s = SymbolUnicorn()
+
+E = S("?e")
+
+# Working with the datomic db.
+###
 
 # yapf: disable
 DB = "datomic:mem://t1"
@@ -70,26 +116,25 @@ MOVIE_SCHEMA = [
           "The year the movie was released in theaters")]
 print transact(DB, MOVIE_SCHEMA)
 
-print transact(DB, [{
-        K("movie/title"): "The Goonies",
-        K("movie/genre"): "action/adventure",
-        K("movie/release_year"): 1985
-    }, {
-        K("movie/title"): "Commando",
-        K("movie/genre"): "action/adventure",
-        K("movie/release_year"): 1985
-    }, {
+print transact(DB, [
+    {
+        k.movie.title: "The Goonies",
+        k.movie.genre: "action/adventure",
+        k.movie.release_year: 1985
+    },
+    cmap(prefix="movie", title="Commando", genre="action", release_year=1938),
+    {
         K("movie/title"): u"øptur",
         K("movie/genre"): "punk dystopia",
         K("movie/release_year"): 1984
     }
 ])
 movies = query([
-    K("find"), S("?title"), S("?genre"), S("?year"),
-    K("where"),
-        [S("?e"), K("movie/title"), S("?title")],
-        [S("?e"), K("movie/release_year"), S("?year")],
-        [S("?e"), K("movie/genre"), S("?genre")],
+    k.find, s.title, s.genre, s.year,
+    k.where,
+        [E, k.movie.title, s.title],
+        [E, k.movie.title, s.year],
+        [E, k.movie.title, s.genre],
 ], DB)
 print movies
 print "A"
