@@ -56,4 +56,25 @@ print "A"
 for movie in movies:
     print u", ".join(unicode(x) for x in movie)
 print "B"
+
+# As a tree?
+TREE_SCHEMA = [
+    {K.db.ident: K.tree.node.title,
+     K.db.valueType: K("db.type/string"),
+     K.db.cardinality: K("db.cardinality/one"),
+     K.db.unique: K("db.unique/identity")},
+    {K.db.ident: K.tree.node.parent,
+     K.db.valueType: K("db.type/ref"),
+     K.db.cardinality: K("db.cardinality/many"),
+     K.db.unique: K("db.unique/identity")},
+]
+print transact(DB, TREE_SCHEMA)
+from uuid import uuid4
+u = str(uuid4)
+x = transact(DB, [
+    {K.tree.node.title: "Stammea3a", K.db.id: u},
+    {K.tree.node.title: "Gren1edf", K.tree.node.parent: u},
+])
+print x
+
 # yapf: enable

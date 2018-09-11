@@ -21,14 +21,23 @@ class KeywordUnicorn(Keyword):
             self.hv = self.str.__hash__()
             return self
 
+    def __call__(self, value):
+        return Keyword(value)
+
 
 class VariableUnicorn(object):
     def __getattr__(self, value):
         return Symbol("?" + value)
 
+    def __call__(self, value):
+        return Symbol("?" + value)
+
 
 class SymbolUnicorn(object):
     def __getattr__(self, value):
+        return Symbol(value)
+
+    def __call__(self, value):
         return Symbol(value)
 
 
