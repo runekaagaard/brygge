@@ -91,6 +91,7 @@ movies = query([
         [S("?e"), K("movie/release_year"), S("?year")],
         [S("?e"), K("movie/genre"), S("?genre")],
 ], DB)
+print movies
 print "A"
 for movie in movies:
     print u", ".join(unicode(x) for x in movie)
