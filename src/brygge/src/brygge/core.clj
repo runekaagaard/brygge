@@ -18,64 +18,10 @@
     [cognitect.transit :as transit]
     [clojure.string :as str]))
 
-(defn datom-from-reader [vec]
-  ;(apply datomic.db.Datum vec)
-  [0, 1, 2, 3, 4]
-  )
-
-(def read-handlers
-  {
-    ;"datascript/DB"    (transit/read-handler db/db-from-reader)
-    "datum" (transit/read-handler datom-from-reader) })
-
-
-(def write-handlers
-  {
-
-   ;; DB    (transit/write-handler "datascript/DB"
-   ;;          (fn [db]
-   ;;            { :schema (:schema db)
-   ;;              :datoms (:eavt db) }))
-    datomic.db.Datum (transit/write-handler "datum"
-        (fn [d]
-          ;; (if (.-added d)
-          ;;   [(.-e d) (.-a d) (.-v d) (.-tx d)]
-          ;;   [(.-e d) (.-a d) (.-v d) (.-tx d) false]))
-          [0, 1, 2, 3, 4]
-        ))
-    ; datomic.btset.BTSet (get transit/default-write-handlers java.util.List)
-    datomic.btset.BTSet (transit/write-handler "btset"
-        (fn [d]
-          ;; (if (.-added d)
-          ;;   [(.-e d) (.-a d) (.-v d) (.-tx d)]
-          ;;   [(.-e d) (.-a d) (.-v d) (.-tx d) false]))
-          [0, 1, 2, 3, 4]
-        ))
-   
-    com.datomic.lucene.store.RAMFile (transit/write-handler "ramfile"
-        (fn [d]
-          ;; (if (.-added d)
-          ;;   [(.-e d) (.-a d) (.-v d) (.-tx d)]
-          ;;   [(.-e d) (.-a d) (.-v d) (.-tx d) false]))
-          [0, 1, 2, 3, 4]
-        ))
-
-   
-    clojure.lang.IFn (transit/write-handler "fn"
-        (fn [d]
-          ;; (if (.-added d)
-          ;;   [(.-e d) (.-a d) (.-v d) (.-tx d)]
-          ;;   [(.-e d) (.-a d) (.-v d) (.-tx d) false]))
-          [0, 1, 2, 3, 4]
-        ))
-   })
-
 (defn result [data & [status]]
     (prn data)
   (let [out (ByteArrayOutputStream. 4096)
-        writer (transit/writer out :json
-                               ;{:handlers write-handlers}
-                               )]
+        writer (transit/writer out :json)]
     (transit/write writer {:content data})
     {:status (or status 200)
      :headers {"content-type" "text/plain"}
@@ -94,7 +40,7 @@
 
 
 (defn parse-req [req]
-  (let [reader (transit/reader (:body req) :json { :handlers read-handlers })
+  (let [reader (transit/reader (:body req) :json)
         data (transit/read reader)]
     (:content data)))
 
