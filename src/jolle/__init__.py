@@ -101,6 +101,11 @@ k = KeywordUnicorn()
 s = SymbolUnicorn()
 
 E = S("?e")
+_ = S("_")
+IN = K("in")
+FIND = K("find")
+WHERE = K("where")
+D = S("$")
 
 # Working with the datomic db.
 ###
@@ -130,12 +135,14 @@ print transact(DB, [
     }
 ])
 movies = query([
-    k.find, s.title, s.genre, s.year,
-    k.where,
+    FIND, s.title, s.genre, s.year,
+    IN, D, s.released,
+    WHERE,
         [E, k.movie.title, s.title],
-        [E, k.movie.title, s.year],
-        [E, k.movie.title, s.genre],
-], DB)
+        [E, k.movie.release_year, s.year],
+        [E, k.movie.genre, s.genre],
+        [E, k.movie.release_year, s.released],
+], DB, 1938)
 print movies
 print "A"
 for movie in movies:
