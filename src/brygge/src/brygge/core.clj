@@ -1,7 +1,8 @@
 (ns brygge.core
   (:import
     [io.netty.handler.ssl SslContextBuilder]
-    [java.io ByteArrayInputStream ByteArrayOutputStream])
+    [java.io ByteArrayInputStream ByteArrayOutputStream
+     clojure.core.memoize memo-clear!])
   (:require
     [compojure.core :as compojure :refer [GET POST]]
     [ring.middleware.params :as params]
@@ -62,6 +63,11 @@
 (defn create-database-handler [req]
   (result (d/create-database (parse-req req))))
 
+(defn delete-database-handler [req]
+  (let [db-uri (parse-req req)])
+    (memo-clear! conn db-uri)
+    (result (d/delete-database db-uri)))
+
 (defn transact-handler [req]
   (let [args (map insert-connection (parse-req req))]
     (result (format-tx @(apply d/transact args)))))
@@ -77,6 +83,7 @@
       (POST "/transact"         [] transact-handler)
       (POST "/query"         [] query-handler)
       (POST "/create-database"         [] create-database-handler)
+      (POST "/delete-database"         [] delete-database-handler)
       (route/not-found "No such page.")))))
 
 (defn -main

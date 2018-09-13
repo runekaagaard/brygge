@@ -1,6 +1,6 @@
 # coding=utf-8
 from __future__ import unicode_literals
-from jolle import create_database, transact, query
+from jolle import delete_database, create_database, transact, query
 from jolle.shortcuts import (K, V, S, E, _, IN, D, GT, GTE, LT, LTE, NE, cmap,
                              FIND, WHERE, true, false)
 from transit.transit_types import Keyword, Symbol
@@ -20,6 +20,7 @@ def field(ident, db_type, doc, cardinality="one"):
 
 # yapf: disable
 DB = "datomic:mem://t1"
+print delete_database(DB)
 print create_database(DB)
 
 MOVIE_SCHEMA = [
@@ -88,6 +89,13 @@ x = transact(DB, [
     #{K.node.title: "Strammefa3a", K.db.id: "id"},
     #{K.node.title: "Grern1edf", K.node.parent: "id"},
 ])
+
+# print query(
+#     FIND, V.e, V.title, V.parent,
+#     WHERE, []
+# )
+# assert False
+
 print query([
     FIND, V.title, V.parent,
     WHERE,

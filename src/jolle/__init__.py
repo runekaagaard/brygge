@@ -53,3 +53,7 @@ def query(*args, **kwargs):
 
 def create_database(db):
     return _request("create-database", db)
+
+
+def delete_database(db):
+    return _request("delete-database", db)
