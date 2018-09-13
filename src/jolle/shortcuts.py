@@ -1,6 +1,6 @@
 # coding=utf-8
 from __future__ import unicode_literals
-from transit.transit_types import Keyword, Symbol
+from transit.transit_types import Keyword, Symbol, true, false
 from transit.pyversion import string_types
 
 
@@ -11,13 +11,13 @@ class KeywordUnicorn(Keyword):
     def __getattr__(self, value):
         assert isinstance(value, string_types)
         if self.__dict__["parent"] is None:
-            instance = KeywordUnicorn()
-            instance.parent = instance
-            instance.str = value
-            instance.hv = value.__hash__()
-            return instance
+            k = KeywordUnicorn()
+            k.parent = k
+            k.str = value
+            k.hv = value.__hash__()
+            return k
         else:
-            self.str += u"/" + value
+            self.str = self.str.replace("/", ".") + "/" + value
             self.hv = self.str.__hash__()
             return self
 
@@ -35,10 +35,10 @@ class VariableUnicorn(object):
 
 class SymbolUnicorn(object):
     def __getattr__(self, value):
-        return Symbol(value)
+        return Symbol(value.replace("_", "-"))
 
     def __call__(self, value):
-        return Symbol(value)
+        return Symbol(value.replace("_", "-"))
 
 
 def cmap(**kwargs):
@@ -55,6 +55,8 @@ V = VariableUnicorn()
 
 E = Symbol("?e")
 _ = Symbol("_")
+FIND = Keyword("find")
+WHERE = Keyword("where")
 IN = Keyword("in")
 D = Symbol("$")
 GT = Symbol(">")

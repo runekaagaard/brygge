@@ -42,8 +42,13 @@ def transact(*args):
     return _request("transact", args)
 
 
-def query(*args):
-    return _request("query", args)
+def query(*args, **kwargs):
+    flat = kwargs.pop('flat', False)
+    result = _request("query", args)
+    if flat is True:
+        return tuple([x[0] for x in result])
+    else:
+        return result
 
 
 def create_database(db):

@@ -1,7 +1,8 @@
 # coding=utf-8
 from __future__ import unicode_literals
 from jolle import create_database, transact, query
-from jolle.shortcuts import (K, V, S, E, _, IN, D, GT, GTE, LT, LTE, NE, cmap)
+from jolle.shortcuts import (K, V, S, E, _, IN, D, GT, GTE, LT, LTE, NE, cmap,
+                             FIND, WHERE, true, false)
 from transit.transit_types import Keyword, Symbol
 
 # Working with the datomic db.
@@ -59,22 +60,62 @@ print "B"
 
 # As a tree?
 TREE_SCHEMA = [
-    {K.db.ident: K.tree.node.title,
-     K.db.valueType: K("db.type/string"),
-     K.db.cardinality: K("db.cardinality/one"),
-     K.db.unique: K("db.unique/identity")},
-    {K.db.ident: K.tree.node.parent,
-     K.db.valueType: K("db.type/ref"),
-     K.db.cardinality: K("db.cardinality/many"),
-     K.db.unique: K("db.unique/identity")},
+    {
+        K.db.index: true,
+        K.db.ident: K.node.title,
+        K.db.valueType: K.db.type.string,
+        K.db.cardinality: K.db.cardinality.one,
+        #K.db.unique: K.db.unique.identity
+    },
+    {
+        K.db.index: true,
+        K.db.ident: K.node.parent,
+        K.db.valueType: K.db.type.ref,
+        K.db.cardinality: K.db.cardinality.one,
+        #K.db.unique: K.db.unique.identity
+    }
 ]
 print transact(DB, TREE_SCHEMA)
-from uuid import uuid4
-u = str(uuid4)
 x = transact(DB, [
-    {K.tree.node.title: "Stammea3a", K.db.id: u},
-    {K.tree.node.title: "Gren1edf", K.tree.node.parent: u},
+    {K.node.title: "Rod1", K.db.id: "i1"},
+    {K.node.title: "Rod1", K.db.id: "i4"},
+    {K.node.title: "Rod2", K.db.id: "i2"},
+    {K.node.title: "Rod3", K.db.id: "i3"},
+    {K.node.title: "Blad", K.node.parent: "i1"},
+    {K.node.title: "Blad", K.node.parent: "i2"},
+    {K.node.title: "Blad", K.node.parent: "i3"},
+    {K.node.title: "Rod"},
+    #{K.node.title: "Strammefa3a", K.db.id: "id"},
+    #{K.node.title: "Grern1edf", K.node.parent: "id"},
 ])
-print x
+print query([
+    FIND, V.title, V.parent,
+    WHERE,
+        [V.e, K.node.title, V.title],
+        [V.e, K.node.parent, V.parent]
+], DB)
+
+
+
+print "FOOOO"
+for x in query([
+    K.find, V.e, V.title, V.parent,
+    K.where,
+        [V.e, K.node.title, V.title],
+        [[S.get_else, D, V.e, K.node.parent, "N/A"], V.parent]
+], DB):
+    print x
+
+print "a"
+for x in query([
+    K.find, V.e, V.title, V.parent,
+    IN, D, V("%"),
+    K.where,
+        [V.e, K.node.title, V.title],
+        [[S.get_else, D, V.e, K.node.parent, "N/A"], V.parent]
+], DB, [V.e, V.title, V.parent, {K.node.parent: 6}]):
+    print x
+
+#print query([FIND, V.name, WHERE, [V.e, K.node.title, V.name]], DB)
 
 # yapf: enable
