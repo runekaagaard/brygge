@@ -1,6 +1,6 @@
 # coding=utf-8
 from __future__ import unicode_literals
-from jolle import delete_database, create_database, transact, query
+from jolle import delete_database, create_database, transact, query, ping
 from jolle.shortcuts import (K, V, S, E, _, IN, D, GT, GTE, LT, LTE, NE, cmap,
                              FIND, WHERE, true, false)
 from transit.transit_types import Keyword, Symbol
@@ -48,7 +48,11 @@ TREE_QUERY_RECUR = [
         [V.e, K.node.title, "A"],
 ]
 
-print transact(DB, TREE_SCHEMA)
+transact(DB, TREE_SCHEMA)
+
+for x in xrange(1000):
+    ping()
+
 print transact(DB, [
     {K.node.title: "A", K.db.id: "A"},
     {K.node.title: "B", K.db.id: "B"},
@@ -66,11 +70,8 @@ print transact(DB, [
     {K.db.id: "AAB", K.node.children: "AABA"},
 ])
 
-print
-for x in query(TREE_QUERY, DB):
-    print x
-
 print "\nTREE"
+
 def print_tree(nodes, level=0):
     for node in nodes:
         print " " * level + node[K.node.title]

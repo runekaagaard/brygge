@@ -57,3 +57,7 @@ def create_database(db):
 
 def delete_database(db):
     return _request("delete-database", db)
+
+
+def ping():
+    return _request("ping", None)

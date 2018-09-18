@@ -86,6 +86,9 @@
   (let [args (map insert-db (parse-req req))]
     (result (apply d/q args))))
 
+(defn ping-handler [req]
+  (result "pong"))
+
 (def handler
   (params/wrap-params
    (wrap-exception
@@ -94,6 +97,7 @@
       (POST "/query"         [] query-handler)
       (POST "/create-database"         [] create-database-handler)
       (POST "/delete-database"         [] delete-database-handler)
+      (POST "/ping"         [] ping-handlerr)
       (route/not-found "No such page.")))))
 
 (defn -main
