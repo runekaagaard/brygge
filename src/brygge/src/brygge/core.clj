@@ -2,7 +2,7 @@
   (:import
     [io.netty.handler.ssl SslContextBuilder]
     [java.io ByteArrayInputStream ByteArrayOutputStream
-     clojure.core.memoize memo-clear!])
+     ])
   (:require
     [compojure.core :as compojure :refer [GET POST]]
     [ring.middleware.params :as params]
@@ -17,7 +17,8 @@
     [aleph.http :as http]
     [datomic.api :as d]
     [cognitect.transit :as transit]
-    [clojure.string :as str]))
+    [clojure.string :as str]
+    ))
 
 (defn result [data & [status]]
   (let [out (ByteArrayOutputStream. 4096)
@@ -33,10 +34,15 @@
       (catch Exception e
         (result (with-out-str (clojure.stacktrace/print-stack-trace e 100)) 500)))))
 
-(def conn
-  (memoize
-   (fn [db-uri]
-    (d/connect db-uri))))
+(def conns {})
+
+(defn conn [db-uri]
+  (let [c (conns db-uri)]
+    (if c
+      c
+      (do
+        (def conns (conj {db-uri (d/connect db-uri)} conns))
+        (conns db-uri)))))
 
 
 (defn parse-req [req]
@@ -61,12 +67,16 @@
    :tx-data (for [x (:tx-data data)] [(.e x) (.a x) (.v x) (.tx x) (.added x)])})
 
 (defn create-database-handler [req]
-  (result (d/create-database (parse-req req))))
+  (let [db-uri (parse-req req)]
+    (result (d/create-database db-uri))))
 
 (defn delete-database-handler [req]
-  (let [db-uri (parse-req req)])
-    (memo-clear! conn db-uri)
-    (result (d/delete-database db-uri)))
+  (let [db-uri (parse-req req)]
+    (when (conns db-uri)
+      (do
+        (d/release (conn db-uri))
+        (def conns (dissoc conns db-uri))))
+    (result (d/delete-database db-uri))))
 
 (defn transact-handler [req]
   (let [args (map insert-connection (parse-req req))]
