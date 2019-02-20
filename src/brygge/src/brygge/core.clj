@@ -97,7 +97,7 @@
       (POST "/query"         [] query-handler)
       (POST "/create-database"         [] create-database-handler)
       (POST "/delete-database"         [] delete-database-handler)
-      (POST "/ping"         [] ping-handlerr)
+      (POST "/ping"         [] ping-handler)
       (route/not-found "No such page.")))))
 
 (defn -main
