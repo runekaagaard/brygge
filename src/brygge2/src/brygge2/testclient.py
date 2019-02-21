@@ -41,6 +41,29 @@ class UDSIO(object):
 
 
 io = UDSIO()
-writer = Writer(io)
+
+sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+server_address = '/tmp/foo'
+sock.connect(server_address)
+
+sock_out = sock.makefile('wb')
+sock_in = sock.makefile('r')
+sock.close()
+
+writer = Writer(sock_out)
 writer.write({Keyword("content"): [1, 2, 3, 4]})
-io.recv()
+print >> sock_out, ""
+sock_out.close()
+#io.recv()
+
+print "------------"
+print dir(sock_in), sock_in, type(sock_in)
+
+#reader = Reader()
+#reader.read(sock_in)
+#for x in reader.readeach(sock_in):
+#    print x
+#sock_in.flush(b)
+#print sock_in.read(200)
+for line in sock_in:  # Python 2.2 only; 'in sockin.xreadlines(  )' in 2.1
+    print 'received:', line,
