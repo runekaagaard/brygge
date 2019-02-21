@@ -3,6 +3,7 @@
   (:import [org.newsclub.net.unix AFUNIXServerSocket AFUNIXSocketAddress]
            [org.newsclub.net.unix.demo.server EchoServer]
            [org.newsclub.net.unix.demo.server DemoServerBase]
+           [java.net SocketAddress]
            [java.io File]
            ;[brygge2.core Server]
            )
@@ -10,10 +11,13 @@
 
 (gen-class
 	:name "brygge2.core.Server"
-	extends [EchoServer]
+	;extends [EchoServer]
 	;:init "init"
-	;; :constructors {[] []}
+	;:constructors {[java.net.SocketAdress] []}
 	:prefix "server-")
+
+;(defn server-init [listenAddress]
+;  nil)
 
 (defn server-doServeSocket [socket]
   nil)
@@ -45,7 +49,7 @@
     (let [file (new File "/tmp/foo")
           server (AFUNIXServerSocket/newInstance)
           server2 (new EchoServer (new AFUNIXSocketAddress file))
-          server3 (new brygge2.core.Server (new AFUNIXSocketAddress file))
+          server3 (new brygge2.core.Server)
           ]
       (.bind server (new AFUNIXSocketAddress file))
       (prn server)

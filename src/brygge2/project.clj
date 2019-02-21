@@ -8,5 +8,6 @@
                  [com.kohlschutter.junixsocket/junixsocket-demo "2.2.0"]
                  [com.kohlschutter.junixsocket/junixsocket-common "2.2.0"]]
   :main ^:skip-aot brygge2.core
+  :aot [brygge2.core]
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})
