@@ -40,10 +40,9 @@ class UDSIO(object):
             self.sock.close()
 
 
-io = UDSIO()
-
+#io = UDSIO()
 sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-server_address = '/tmp/foo'
+server_address = '/tmp/brygge.sock'
 sock.connect(server_address)
 
 sock_out = sock.makefile('wb')
