@@ -5,14 +5,9 @@
   (:require [clojure.tools.logging :as log]
             ;[datomic.api :as d]
             [cognitect.transit :as transit]
-            )
+            [clojure.java.io :as io]
+  )
   (:gen-class))
-
-; Catch errors in threads.
-(Thread/setDefaultUncaughtExceptionHandler
- (reify Thread$UncaughtExceptionHandler
-   (uncaughtException [_ thread ex]
-     (log/error ex "Uncaught exception on the thread " (.getName thread)))))
 
 (defn safe-println [& more]
   (.write *out* (str (clojure.string/join " " more) "\n"))
@@ -21,13 +16,14 @@
 (defn get-server [socket-address]
     (proxy [AFUNIXSocketServer] [socket-address]
     (doServeSocket [socket]
-      (let [in (.getInputStream socket) out (.getOutputStream socket)
-            reader (transit/reader in :json)]
-        (log/info socket in out)
-        (log/info (transit/read reader))
-        (log/info "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
-        (.write out "foooo" 0 5)
-        (log/info "NNNNNNNNNNNNNNNNNNNNNNNNNNNN")))))
+      (try (let [in (.getInputStream socket) out (.getOutputStream socket)
+                 reader (transit/reader in :json) data (transit/read reader)
+                 writer (transit/writer out :json)]
+        (transit/write writer data)
+        (try (.close in) (catch Exception e (log/error e)))
+        (try (.close out) (catch Exception e (log/error e)))
+        (try (.close socket) (catch Exception e (log/error e))))
+      (catch Exception e (log/error e))))))
 
 (defn -main
     [& args]
