@@ -7,7 +7,9 @@
                  [com.kohlschutter.junixsocket/junixsocket-core "2.2.0"]
                  [com.kohlschutter.junixsocket/junixsocket-demo "2.2.0"]
                  [com.kohlschutter.junixsocket/junixsocket-common "2.2.0"]
-                 [org.clojure/tools.logging "0.4.1"]]
+                 [org.clojure/tools.logging "0.4.1"]
+                 [com.datomic/client-pro "0.8.20"]
+                 [com.cognitect/transit-clj "0.8.313"]]
   :main ^:skip-aot brygge2.core
   :aot [brygge2.core]
   :target-path "target/%s"

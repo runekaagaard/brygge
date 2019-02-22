@@ -1,9 +1,11 @@
 (ns brygge2.core
-  (:import [org.newsclub.net.unix AFUNIXServerSocket AFUNIXSocketAddress]
+  (:import [org.newsclub.net.unix AFUNIXSocketAddress]
            [org.newsclub.net.unix.server AFUNIXSocketServer]
-           [java.net SocketAddress]
            [java.io File])
-  (:require [clojure.tools.logging :as log])
+  (:require [clojure.tools.logging :as log]
+            ;[datomic.api :as d]
+            [cognitect.transit :as transit]
+            )
   (:gen-class))
 
 ; Catch errors in threads.
@@ -19,7 +21,13 @@
 (defn get-server [socket-address]
     (proxy [AFUNIXSocketServer] [socket-address]
     (doServeSocket [socket]
-      (safe-println socket))))
+      (let [in (.getInputStream socket) out (.getOutputStream socket)
+            reader (transit/reader in :json)]
+        (log/info socket in out)
+        (log/info (transit/read reader))
+        (log/info "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
+        (.write out "foooo" 0 5)
+        (log/info "NNNNNNNNNNNNNNNNNNNNNNNNNNNN")))))
 
 (defn -main
     [& args]
