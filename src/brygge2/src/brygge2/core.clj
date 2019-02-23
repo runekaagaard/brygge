@@ -9,17 +9,13 @@
   )
   (:gen-class))
 
-(defn safe-println [& more]
-  (.write *out* (str (clojure.string/join " " more) "\n"))
-  (flush))
-
 (defn get-server [socket-address]
     (proxy [AFUNIXSocketServer] [socket-address]
     (doServeSocket [socket]
       (try (let [in (.getInputStream socket) out (.getOutputStream socket)
-                 reader (transit/reader in :json) data (transit/read reader)
+                 reader (transit/reader in :json)
                  writer (transit/writer out :json)]
-        (transit/write writer data)
+        (transit/write writer (transit/read reader))
         (try (.close in) (catch Exception e (log/error e)))
         (try (.close out) (catch Exception e (log/error e)))
         (try (.close socket) (catch Exception e (log/error e))))
