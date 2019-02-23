@@ -1,8 +1,6 @@
 # coding=utf-8
 import socket
-import sys
 from contextlib import closing
-from StringIO import StringIO
 
 from transit.writer import Writer
 from transit.reader import Reader
@@ -18,11 +16,8 @@ def write(data):
     with closing(sock):
         sockfile = sock.makefile('wrb')
         with closing(sockfile):
-            writer = Writer(sockfile, TRANSFER_PROTOCOL)
-            writer.write(data)
-            reader = Reader(TRANSFER_PROTOCOL)
-
-            return reader.read(sockfile)
+            Writer(sockfile, TRANSFER_PROTOCOL).write(data)
+            return Reader(TRANSFER_PROTOCOL).read(sockfile)
 
 
-print write({Keyword("content"): [1, 2, 3, 4]})
+print write({Keyword("content"): [u'øæåØÆÅ', 2, 3, 4]})
