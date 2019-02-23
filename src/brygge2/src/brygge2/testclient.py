@@ -2,12 +2,14 @@
 import socket
 import sys
 from contextlib import closing
+from StringIO import StringIO
+
 from transit.writer import Writer
 from transit.reader import Reader
-from StringIO import StringIO
 from transit.transit_types import Keyword
 
 SERVER_ADDRESS = '/tmp/brygge.sock'
+TRANSFER_PROTOCOL = "msgpack"
 
 
 def write(data):
@@ -16,9 +18,9 @@ def write(data):
     with closing(sock):
         sockfile = sock.makefile('wrb')
         with closing(sockfile):
-            writer = Writer(sockfile)
+            writer = Writer(sockfile, TRANSFER_PROTOCOL)
             writer.write(data)
-            reader = Reader()
+            reader = Reader(TRANSFER_PROTOCOL)
 
             return reader.read(sockfile)
 

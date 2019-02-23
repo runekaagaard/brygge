@@ -9,12 +9,14 @@
   )
   (:gen-class))
 
+(def transfer-protocol :msgpack)
+
 (defn get-server [socket-address]
     (proxy [AFUNIXSocketServer] [socket-address]
     (doServeSocket [socket]
       (try (let [in (.getInputStream socket) out (.getOutputStream socket)
-                 reader (transit/reader in :json)
-                 writer (transit/writer out :json)]
+                 reader (transit/reader in transfer-protocol)
+                 writer (transit/writer out transfer-protocol)]
         (transit/write writer (transit/read reader))
         (try (.close in) (catch Exception e (log/error e)))
         (try (.close out) (catch Exception e (log/error e)))
