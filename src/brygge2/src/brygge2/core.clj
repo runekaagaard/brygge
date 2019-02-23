@@ -17,7 +17,7 @@
         (try (let [in (.getInputStream socket) out (.getOutputStream socket)
                    reader (transit/reader in transfer-protocol)
                    writer (transit/writer out transfer-protocol)]
-          (transit/write writer (transit/read reader))
+          (transit/write writer (eval (transit/read reader)))
           (try (.close in) (catch Exception e (log/error e)))
           (try (.close out) (catch Exception e (log/error e)))
           (try (.close socket) (catch Exception e (log/error e))))
